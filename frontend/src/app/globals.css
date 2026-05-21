@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: oklch(65% 0.22 265);
+  --color-primary-foreground: white;
+  --font-sans: "Inter", sans-serif;
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  body { font-feature-settings: "rlig" 1, "calt" 1; }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .gradient-text {
+    background: linear-gradient(135deg, #a78bfa, #818cf8, #6366f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gradient-bg {
+    background: linear-gradient(135deg, #7c3aed, #6366f1);
+  }
+  .glow {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4), 0 0 60px rgba(139, 92, 246, 0.1);
+  }
+  .glow-sm {
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.3); border-radius: 2px; }
+  .backface-hidden { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+}
+
+/* Animated gradient background */
+.animated-bg {
+  background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #0f0c29);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Shimmer loading */
+.shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.08) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float { animation: float 3s ease-in-out infinite; }
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 5px rgba(139,92,246,0.4); }
+  50% { box-shadow: 0 0 20px rgba(139,92,246,0.8), 0 0 40px rgba(139,92,246,0.3); }
+}
+.animate-pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
