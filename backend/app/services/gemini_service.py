@@ -22,6 +22,9 @@ class GeminiService:
         max_tokens: int = 8192,
         retries: int = 3
     ) -> str:
+        if not self.api_key:
+            raise ValueError("GEMINI_API_KEY is not configured. Set it in environment variables.")
+
         url = f"{self.base_url}/models/{self.model}:generateContent"
 
         payload = {
