@@ -33,6 +33,8 @@ services:
       REDIS_URL: redis://redis:6379
       SECRET_KEY: ${SECRET_KEY:-dev-secret-change-in-production-minimum-32-chars}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
       ALLOWED_ORIGINS: http://localhost:3000
       ENVIRONMENT: development
     depends_on:

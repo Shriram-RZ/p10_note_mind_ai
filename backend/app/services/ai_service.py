@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
-from app.services.gemini_service import gemini_service
+from app.services.provider import get_ai_provider
 from app.utils.prompts import (
     SUMMARIZE_LECTURE_PROMPT, GENERATE_FLASHCARDS_PROMPT,
     GENERATE_QUIZ_PROMPT, TRANSLATE_PROMPT, GENERATE_MIND_MAP_PROMPT,
@@ -35,7 +35,7 @@ class AIService:
             summary_type=summary_type
         )
 
-        result = await gemini_service.generate_json_content(prompt, temperature=0.3)
+        result = await get_ai_provider().generate_json_content(prompt, temperature=0.3)
 
         summary_record = Summary(
             user_id=user_id,
@@ -78,7 +78,7 @@ class AIService:
             target_language=target_language
         )
 
-        result = await gemini_service.generate_json_content(prompt, temperature=0.1)
+        result = await get_ai_provider().generate_json_content(prompt, temperature=0.1)
 
         translation_record = Translation(
             user_id=user_id,
@@ -114,7 +114,7 @@ class AIService:
             difficulty=difficulty
         )
 
-        result = await gemini_service.generate_json_content(prompt, temperature=0.4)
+        result = await get_ai_provider().generate_json_content(prompt, temperature=0.4)
 
         deck = FlashcardDeck(
             user_id=user_id,
@@ -168,7 +168,7 @@ class AIService:
             question_types=", ".join(question_types)
         )
 
-        result = await gemini_service.generate_json_content(prompt, temperature=0.4)
+        result = await get_ai_provider().generate_json_content(prompt, temperature=0.4)
 
         quiz = Quiz(
             user_id=user_id,
@@ -217,7 +217,7 @@ class AIService:
             depth=depth
         )
 
-        result = await gemini_service.generate_json_content(prompt, temperature=0.4)
+        result = await get_ai_provider().generate_json_content(prompt, temperature=0.4)
 
         mind_map = MindMap(
             user_id=user_id,
@@ -298,7 +298,7 @@ class AIService:
             question=message
         )
 
-        response_text = await gemini_service.generate_content(prompt, temperature=0.7)
+        response_text = await get_ai_provider().generate_content(prompt, temperature=0.7)
 
         # Save AI response
         ai_msg = ChatMessage(
@@ -323,7 +323,7 @@ class AIService:
         prompt = AI_INSIGHTS_PROMPT.format(content=content[:5000])
 
         try:
-            result = await gemini_service.generate_json_content(prompt, temperature=0.3)
+            result = await get_ai_provider().generate_json_content(prompt, temperature=0.3)
             return result
         except Exception as e:
             logger.error(f"Failed to generate insights: {e}")

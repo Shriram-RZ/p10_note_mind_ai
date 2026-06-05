@@ -13,17 +13,20 @@ from app.schemas.ai import (
 )
 from app.utils.auth import get_current_user
 from app.services.ai_service import ai_service
-from app.services.gemini_service import gemini_service
+from app.services.provider import get_ai_provider
 from app.services.file_service import file_service
 
 router = APIRouter(prefix="/ai", tags=["AI"])
 
 def _raise_ai_error(e: Exception):
-    if isinstance(e, ValueError) and "GEMINI_API_KEY" in str(e):
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                            detail="AI service not configured. Set GEMINI_API_KEY.")
+    msg = str(e)
+    if isinstance(e, ValueError) and "API key" in msg:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service not configured. Set GEMINI_API_KEY or GROQ_API_KEY.",
+        )
     raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
-                        detail=f"AI service error: {str(e)}")
+                        detail=f"AI service error: {msg}")
 
 @router.post("/summarize")
 async def summarize_content(
@@ -115,8 +118,11 @@ async def stream_chat(
     )
 
     async def generate():
-        async for chunk in gemini_service.stream_content(prompt):
-            yield f"data: {chunk}\n\n"
+        try:
+            async for chunk in get_ai_provider().stream_content(prompt):
+                yield f"data: {chunk}\n\n"
+        except Exception as e:
+            yield f"data: [ERROR] {e}\n\n"
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
