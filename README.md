@@ -1,11 +1,11 @@
 # NoteMind AI — Smart AI Notes & Online Class Companion
 
-> An AI-native productivity and learning ecosystem powered by Gemini Flash AI
+> An AI-native productivity and learning ecosystem powered by Groq AI
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)](https://fastapi.tiangolo.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)](https://postgresql.org)
-[![Gemini AI](https://img.shields.io/badge/Gemini-Flash-4285F4?logo=google)](https://ai.google.dev)
+[![Groq](https://img.shields.io/badge/Groq-Llama%203.3-F55036?logo=groq)](https://groq.com)
 
 ---
 
@@ -41,7 +41,7 @@
 - **bcrypt** + **JWT** auth
 
 ### AI
-- **Gemini Flash** (`gemini-2.0-flash`)
+- **Groq** (`llama-3.3-70b-versatile`)
 - Whisper-compatible audio transcription
 - PyPDF2 + python-docx text extraction
 - Tesseract OCR for images
@@ -58,7 +58,7 @@
 - Node.js 20+
 - Python 3.11+
 - PostgreSQL 16+
-- Gemini API key ([get one free](https://ai.google.dev))
+- Groq API key ([get one free](https://console.groq.com))
 
 ### 1. Clone & Setup
 
@@ -96,7 +96,7 @@ npm run dev
 
 ```bash
 cp .env.example .env
-# Edit .env with GEMINI_API_KEY and SECRET_KEY
+# Edit .env with GROQ_API_KEY and SECRET_KEY
 
 docker-compose up -d
 ```
@@ -177,8 +177,7 @@ Set `NEXT_PUBLIC_API_URL` to your Railway backend URL.
 |----------|-------------|----------|
 | `DATABASE_URL` | PostgreSQL connection string | ✅ |
 | `SECRET_KEY` | JWT signing key (32+ chars) | ✅ |
-| `GEMINI_API_KEY` | Google AI Studio key | ✅ |
-| `CLOUDINARY_*` | File storage (optional) | ❌ |
+| `GROQ_API_KEY` | Groq API key (console.groq.com) | ✅ |
 | `REDIS_URL` | Task queue (optional) | ❌ |
 
 ---
@@ -242,5 +241,5 @@ MIT License — see [LICENSE](LICENSE) for details.
 ---
 
 <div align="center">
-  <strong>Built with ❤️ using Next.js, FastAPI & Gemini AI</strong>
+  <strong>Built with ❤️ using Next.js, FastAPI & Groq AI</strong>
 </div>

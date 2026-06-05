@@ -20,7 +20,6 @@ class UploadedFile(Base):
     extracted_text = Column(Text, nullable=True)
     transcription = Column(Text, nullable=True)
     meta_data = Column(JSON, nullable=True)
-    cloudinary_public_id = Column(String(500), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

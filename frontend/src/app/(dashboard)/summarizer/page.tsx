@@ -25,8 +25,46 @@ export default function SummarizerPage() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("summary");
   const fileRef = useRef<HTMLInputElement>(null);
+  const TEXT_CHAR_LIMIT = 1000;
+  const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024;
+
+  const normalizeResult = (data: any): SummaryResult => ({
+    summary: typeof data.summary === "string" ? data.summary : "",
+    key_points: Array.isArray(data.key_points)
+      ? data.key_points
+      : typeof data.key_points === "string"
+      ? [data.key_points]
+      : [],
+    topics: Array.isArray(data.topics)
+      ? data.topics
+      : typeof data.topics === "string"
+      ? [data.topics]
+      : [],
+    action_items: Array.isArray(data.action_items)
+      ? data.action_items
+      : typeof data.action_items === "string"
+      ? [data.action_items]
+      : [],
+    important_concepts: Array.isArray(data.important_concepts)
+      ? data.important_concepts
+      : [],
+    filename: typeof data.filename === "string" ? data.filename : undefined,
+  });
 
   const handleFileUpload = async (file: File) => {
+    const fileName = file.name.toLowerCase();
+    if (!fileName.endsWith(".txt")) {
+      setError("Only .txt files are supported for summarization.");
+      setState("error");
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setError("File too large. Maximum size is 1MB.");
+      setState("error");
+      return;
+    }
+
     setState("uploading");
     setError("");
     const formData = new FormData();
@@ -37,7 +75,7 @@ export default function SummarizerPage() {
       setState("processing");
       const { data } = await aiAPI.uploadAndSummarize(formData);
       if (data.error) { setError(data.error); setState("error"); return; }
-      setResult(data);
+      setResult(normalizeResult(data));
       setState("done");
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } };
@@ -52,7 +90,7 @@ export default function SummarizerPage() {
     setError("");
     try {
       const { data } = await aiAPI.summarize({ text, summary_type: summaryType, language });
-      setResult(data);
+      setResult(normalizeResult(data));
       setState("done");
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } };
@@ -78,7 +116,10 @@ export default function SummarizerPage() {
           </div>
           AI Lecture Summarizer
         </h1>
-        <p className="text-white/40 ml-13">Upload audio, video, or paste text — get instant smart summaries</p>
+        <p className="text-white/40 ml-13">Upload a TXT file or paste text — get instant smart summaries</p>
+        <div className="mt-4 rounded-3xl border border-violet-500/20 bg-violet-500/5 p-4 text-sm text-violet-100 shadow-lg shadow-violet-500/10">
+          <strong className="font-semibold text-white">File & text limits:</strong> upload only <span className="text-white">.txt</span> files under <span className="text-white">1MB</span>, or paste up to <span className="text-white">1,000 characters</span>.
+        </div>
       </motion.div>
 
       {/* Options */}
@@ -117,13 +158,14 @@ export default function SummarizerPage() {
             <div onDrop={handleDrop} onDragOver={(e) => e.preventDefault()}
               onClick={() => fileRef.current?.click()}
               className="glass rounded-2xl p-8 border-2 border-dashed border-white/10 hover:border-violet-500/40 transition-all cursor-pointer text-center group">
-              <input ref={fileRef} type="file" className="hidden" accept=".mp3,.mp4,.wav,.m4a,.pdf,.docx,.txt"
+              <input ref={fileRef} type="file" className="hidden" accept=".txt"
                 onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
               <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 2, repeat: Infinity }}>
                 <Upload className="w-12 h-12 text-violet-400/60 mx-auto mb-3 group-hover:text-violet-400 transition-colors" />
               </motion.div>
-              <h3 className="text-white/70 font-semibold mb-1 group-hover:text-white">Drop your file here</h3>
-              <p className="text-white/30 text-sm">Audio, Video, PDF, DOCX, TXT</p>
+              <h3 className="text-white/70 font-semibold mb-1 group-hover:text-white">Drop your TXT file here</h3>
+              <p className="text-white/30 text-sm">Text files only (.txt)</p>
+              <p className="text-white/70 text-xs mt-2">File limit: 1MB</p>
               <div className="mt-3 px-4 py-1.5 rounded-xl gradient-bg text-white text-xs font-medium inline-block">Browse Files</div>
             </div>
           </motion.div>
@@ -134,9 +176,13 @@ export default function SummarizerPage() {
               <h3 className="text-white/70 font-semibold mb-3 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-violet-400" /> Paste Text
               </h3>
-              <textarea value={text} onChange={(e) => setText(e.target.value)}
+              <textarea value={text} onChange={(e) => setText(e.target.value)} maxLength={TEXT_CHAR_LIMIT}
                 className="flex-1 bg-transparent text-white/70 placeholder-white/20 focus:outline-none resize-none text-sm leading-relaxed min-h-[140px]"
                 placeholder="Paste your lecture notes, article, or any text here..." />
+              <div className="mt-2 flex items-center justify-between text-xs text-violet-100">
+                <span>Text limit: up to {TEXT_CHAR_LIMIT.toLocaleString()} characters</span>
+                <span>{text.length.toLocaleString()} / {TEXT_CHAR_LIMIT.toLocaleString()}</span>
+              </div>
               <motion.button onClick={handleTextSummarize} disabled={!text.trim()} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
                 className="mt-3 w-full py-2.5 rounded-xl gradient-bg text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-40">
                 <Sparkles className="w-4 h-4" /> Summarize
@@ -158,7 +204,7 @@ export default function SummarizerPage() {
             <h3 className="text-xl font-bold text-white mb-2">
               {state === "uploading" ? "Uploading file..." : "AI is analyzing..."}
             </h3>
-            <p className="text-white/40 text-sm">This may take a moment for audio/video files</p>
+            <p className="text-white/40 text-sm">This may take a moment while the file is processed</p>
             <div className="mt-4 w-48 h-1.5 bg-white/10 rounded-full mx-auto overflow-hidden">
               <motion.div className="h-full gradient-bg rounded-full" animate={{ width: ["0%", "100%"] }} transition={{ duration: 3, repeat: Infinity }} />
             </div>

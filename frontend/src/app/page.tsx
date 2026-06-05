@@ -48,7 +48,7 @@ export default function LandingPage() {
         </div>
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="max-w-4xl mx-auto relative">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-violet-500/30 text-violet-300 text-sm mb-8">
-            <Sparkles className="w-4 h-4" /> Powered by Gemini AI
+            <Sparkles className="w-4 h-4" /> Powered by Groq AI
           </div>
           <h1 className="text-6xl md:text-7xl font-black mb-6 leading-tight">
             Study Smarter with{" "}
@@ -159,7 +159,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-white/10 text-center text-white/30 text-sm">
-        <p>© 2025 NoteMind AI. Built with Next.js, FastAPI & Gemini AI.</p>
+        <p>© 2025 NoteMind AI. Built with Next.js, FastAPI & Groq AI.</p>
       </footer>
     </div>
   );

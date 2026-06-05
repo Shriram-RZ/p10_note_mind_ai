@@ -23,7 +23,9 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (currentSession) {
-      chatAPI.messages(currentSession).then(({ data }) => setMessages(data)).catch(console.error);
+      chatAPI.messages(currentSession)
+        .then(({ data }) => setMessages(Array.isArray(data.messages) ? data.messages : []))
+        .catch(console.error);
     }
   }, [currentSession]);
 

@@ -23,7 +23,7 @@ def _raise_ai_error(e: Exception):
     if isinstance(e, ValueError) and "API key" in msg:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI service not configured. Set GEMINI_API_KEY or GROQ_API_KEY.",
+            detail="AI service not configured. Set GROQ_API_KEY.",
         )
     raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
                         detail=f"AI service error: {msg}")
@@ -238,19 +238,24 @@ async def upload_and_summarize(
         text, error = await file_service.extract_text_from_file(tmp_path, suffix)
 
         if error or not text.strip():
-            return {
-                "error": error or "Could not extract text from file",
-                "filename": file.filename
-            }
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=error or "Could not extract text from file",
+            )
 
         # Summarize
-        result = await ai_service.summarize_content(
-            db=db,
-            user_id=current_user.id,
-            content=text,
-            summary_type=summary_type,
-            language=language
-        )
+        try:
+            result = await ai_service.summarize_content(
+                db=db,
+                user_id=current_user.id,
+                content=text,
+                summary_type=summary_type,
+                language=language
+            )
+        except HTTPException:
+            raise
+        except Exception as e:
+            _raise_ai_error(e)
 
         result["extracted_text_preview"] = text[:500] + "..." if len(text) > 500 else text
         result["filename"] = file.filename

@@ -8,15 +8,11 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.0-flash"
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
-    ANTHROPIC_API_KEY: str = ""
-    ANTHROPIC_MODEL: str = "claude-haiku-4-5-20251001"
-    CLOUDINARY_CLOUD_NAME: str = ""
-    CLOUDINARY_API_KEY: str = ""
-    CLOUDINARY_API_SECRET: str = ""
+    GROQ_MODEL: str = "llama-3.1-8b-instant"
+    # Tokens-per-minute budget for a single request. Groq free tier caps
+    # llama-3.1-8b-instant at 6000 TPM; raise this after upgrading the plan.
+    GROQ_TPM_LIMIT: int = 6000
     REDIS_URL: str = "redis://localhost:6379"
     ALLOWED_ORIGINS: str = "http://localhost:3000"
     MAX_FILE_SIZE_MB: int = 100

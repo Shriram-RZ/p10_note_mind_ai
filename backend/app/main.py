@@ -46,7 +46,20 @@ async def add_process_time_header(request: Request, call_next):
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    return JSONResponse(status_code=500, content={"detail": "Internal server error."})
+    # Error responses are produced outside the CORS middleware, so attach the
+    # CORS headers here. Without them the browser reports a misleading
+    # "blocked by CORS policy" instead of surfacing the real 500.
+    headers = {}
+    origin = request.headers.get("origin")
+    if origin and origin in settings.allowed_origins_list:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+        headers["Vary"] = "Origin"
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error."},
+        headers=headers,
+    )
 
 for router in [auth.router, notes.router, folders.router, tags.router, files.router,
                ai.router, dashboard.router, chat.router, flashcards.router, quizzes.router, mind_maps.router]:
