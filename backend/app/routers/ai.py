@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -13,10 +13,20 @@ from app.schemas.ai import (
 )
 from app.utils.auth import get_current_user
 from app.services.ai_service import ai_service
-from app.services.gemini_service import gemini_service
+from app.services.provider import get_ai_provider
 from app.services.file_service import file_service
 
 router = APIRouter(prefix="/ai", tags=["AI"])
+
+def _raise_ai_error(e: Exception):
+    msg = str(e)
+    if isinstance(e, ValueError) and "API key" in msg:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service not configured. Set GEMINI_API_KEY or GROQ_API_KEY.",
+        )
+    raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail=f"AI service error: {msg}")
 
 @router.post("/summarize")
 async def summarize_content(
@@ -35,15 +45,18 @@ async def summarize_content(
     if not content.strip():
         raise HTTPException(status_code=400, detail="No content to summarize")
 
-    result = await ai_service.summarize_content(
-        db=db,
-        user_id=current_user.id,
-        content=content,
-        note_id=request.note_id,
-        file_id=request.file_id,
-        summary_type=request.summary_type,
-        language=request.language
-    )
+    try:
+        result = await ai_service.summarize_content(
+            db=db,
+            user_id=current_user.id,
+            content=content,
+            note_id=request.note_id,
+            file_id=request.file_id,
+            summary_type=request.summary_type,
+            language=request.language
+        )
+    except Exception as e:
+        _raise_ai_error(e)
 
     return result
 
@@ -53,14 +66,17 @@ async def translate_content(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await ai_service.translate_content(
-        db=db,
-        user_id=current_user.id,
-        text=request.text,
-        source_language=request.source_language,
-        target_language=request.target_language,
-        note_id=request.note_id
-    )
+    try:
+        result = await ai_service.translate_content(
+            db=db,
+            user_id=current_user.id,
+            text=request.text,
+            source_language=request.source_language,
+            target_language=request.target_language,
+            note_id=request.note_id
+        )
+    except Exception as e:
+        _raise_ai_error(e)
     return result
 
 @router.post("/chat")
@@ -69,14 +85,17 @@ async def chat_with_notes(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await ai_service.chat_with_notes(
-        db=db,
-        user_id=current_user.id,
-        message=request.message,
-        session_id=request.session_id,
-        context_type=request.context_type,
-        context_id=request.context_id
-    )
+    try:
+        result = await ai_service.chat_with_notes(
+            db=db,
+            user_id=current_user.id,
+            message=request.message,
+            session_id=request.session_id,
+            context_type=request.context_type,
+            context_id=request.context_id
+        )
+    except Exception as e:
+        _raise_ai_error(e)
     return result
 
 @router.post("/chat/stream")
@@ -99,8 +118,11 @@ async def stream_chat(
     )
 
     async def generate():
-        async for chunk in gemini_service.stream_content(prompt):
-            yield f"data: {chunk}\n\n"
+        try:
+            async for chunk in get_ai_provider().stream_content(prompt):
+                yield f"data: {chunk}\n\n"
+        except Exception as e:
+            yield f"data: [ERROR] {e}\n\n"
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
@@ -122,15 +144,18 @@ async def generate_flashcards(
     if not content.strip():
         raise HTTPException(status_code=400, detail="No content provided")
 
-    result = await ai_service.generate_flashcards(
-        db=db,
-        user_id=current_user.id,
-        content=content,
-        count=request.count,
-        difficulty=request.difficulty,
-        note_id=request.note_id,
-        subject=request.subject
-    )
+    try:
+        result = await ai_service.generate_flashcards(
+            db=db,
+            user_id=current_user.id,
+            content=content,
+            count=request.count,
+            difficulty=request.difficulty,
+            note_id=request.note_id,
+            subject=request.subject
+        )
+    except Exception as e:
+        _raise_ai_error(e)
     return result
 
 @router.post("/quiz/generate")
@@ -150,15 +175,18 @@ async def generate_quiz(
     if not content.strip():
         raise HTTPException(status_code=400, detail="No content provided")
 
-    result = await ai_service.generate_quiz(
-        db=db,
-        user_id=current_user.id,
-        content=content,
-        question_count=request.question_count,
-        difficulty=request.difficulty,
-        question_types=request.question_types,
-        note_id=request.note_id
-    )
+    try:
+        result = await ai_service.generate_quiz(
+            db=db,
+            user_id=current_user.id,
+            content=content,
+            question_count=request.question_count,
+            difficulty=request.difficulty,
+            question_types=request.question_types,
+            note_id=request.note_id
+        )
+    except Exception as e:
+        _raise_ai_error(e)
     return result
 
 @router.post("/mind-map/generate")
@@ -178,13 +206,16 @@ async def generate_mind_map(
     if not content.strip():
         raise HTTPException(status_code=400, detail="No content provided")
 
-    result = await ai_service.generate_mind_map(
-        db=db,
-        user_id=current_user.id,
-        content=content,
-        depth=request.depth,
-        note_id=request.note_id
-    )
+    try:
+        result = await ai_service.generate_mind_map(
+            db=db,
+            user_id=current_user.id,
+            content=content,
+            depth=request.depth,
+            note_id=request.note_id
+        )
+    except Exception as e:
+        _raise_ai_error(e)
     return result
 
 @router.post("/upload-and-summarize")
