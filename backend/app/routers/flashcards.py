@@ -162,7 +162,7 @@ async def review_card(
 
     card.review_count += 1
     if review.is_correct:
-        card.ease_factor = min(2.5 + 0.1, card.ease_factor + 0.1)
+        card.ease_factor = min(2.5, card.ease_factor + 0.1)
         if card.review_count >= 3 and not card.is_mastered:
             card.is_mastered = True
             deck = db.query(FlashcardDeck).filter(FlashcardDeck.id == card.deck_id).first()
