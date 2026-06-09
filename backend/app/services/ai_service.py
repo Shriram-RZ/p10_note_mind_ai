@@ -29,13 +29,18 @@ class AIService:
         summary_type: str = "general",
         language: str = "en"
     ) -> Dict[str, Any]:
+        # Keep the request small so it fits comfortably inside Groq's free-tier
+        # per-minute token budget and reliably returns a response. Larger inputs
+        # are truncated; pair a small input cap with a small completion budget.
         prompt = SUMMARIZE_LECTURE_PROMPT.format(
-            content=content[:15000],
+            content=content[:4000],
             language=language,
             summary_type=summary_type
         )
 
-        result = await get_ai_provider().generate_json_content(prompt, temperature=0.3)
+        result = await get_ai_provider().generate_json_content(
+            prompt, temperature=0.3, max_tokens=1024
+        )
 
         summary_record = Summary(
             user_id=user_id,

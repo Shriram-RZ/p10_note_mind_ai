@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Brain, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
-import { authAPI } from "@/lib/api";
+import { authAPI, getErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 
 export default function LoginPage() {
@@ -26,8 +26,7 @@ export default function LoginPage() {
       setUser(user);
       router.push("/dashboard");
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { detail?: string } } };
-      setError(axiosErr.response?.data?.detail || "Invalid email or password");
+      setError(getErrorMessage(err, "Invalid email or password"));
     } finally {
       setLoading(false);
     }

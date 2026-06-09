@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Brain, Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
-import { authAPI } from "@/lib/api";
+import { authAPI, getErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 
 export default function SignupPage() {
@@ -27,8 +27,7 @@ export default function SignupPage() {
       setUser(user);
       router.push("/dashboard");
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { detail?: string } } };
-      setError(axiosErr.response?.data?.detail || "Signup failed. Please try again.");
+      setError(getErrorMessage(err, "Signup failed. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -72,7 +71,9 @@ export default function SignupPage() {
               <label className="text-white/70 text-sm mb-2 block">Username</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                <input type="text" required value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })}
+                <input type="text" required minLength={3} pattern="[A-Za-z0-9_\-]+"
+                  title="At least 3 characters: letters, numbers, underscores, hyphens"
+                  value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })}
                   className="w-full pl-10 pr-4 py-3 rounded-xl glass border border-white/10 text-white placeholder-white/30 focus:border-violet-500/50 focus:outline-none transition-colors"
                   placeholder="johndoe" />
               </div>

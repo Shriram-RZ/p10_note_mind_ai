@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, Mic, Brain, FileText, Loader2, CheckCircle, X, Sparkles, List, Tag, Zap } from "lucide-react";
-import { aiAPI } from "@/lib/api";
+import { aiAPI, getErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type SummaryResult = {
@@ -26,7 +26,8 @@ export default function SummarizerPage() {
   const [activeTab, setActiveTab] = useState("summary");
   const fileRef = useRef<HTMLInputElement>(null);
   const TEXT_CHAR_LIMIT = 1000;
-  const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024;
+  const MAX_FILE_SIZE_KB = 20;
+  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 1024;
 
   const normalizeResult = (data: any): SummaryResult => ({
     summary: typeof data.summary === "string" ? data.summary : "",
@@ -60,26 +61,30 @@ export default function SummarizerPage() {
     }
 
     if (file.size > MAX_FILE_SIZE_BYTES) {
-      setError("File too large. Maximum size is 1MB.");
+      setError(`File too large. Maximum size is ${MAX_FILE_SIZE_KB}KB — please upload a small text file.`);
       setState("error");
       return;
     }
 
     setState("uploading");
     setError("");
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("summary_type", summaryType);
-    formData.append("language", language);
     try {
+      // Step 1: extract the text from the .txt file in the browser.
+      const fileText = await file.text();
+      if (!fileText.trim()) {
+        setError("This file appears to be empty.");
+        setState("error");
+        return;
+      }
+
+      // Step 2: send the extracted text to the AI summarizer.
       setState("processing");
-      const { data } = await aiAPI.uploadAndSummarize(formData);
+      const { data } = await aiAPI.summarize({ text: fileText, summary_type: summaryType, language });
       if (data.error) { setError(data.error); setState("error"); return; }
-      setResult(normalizeResult(data));
+      setResult({ ...normalizeResult(data), filename: file.name });
       setState("done");
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { detail?: string } } };
-      setError(err.response?.data?.detail || "Failed to process file");
+      setError(getErrorMessage(e, "Failed to process file"));
       setState("error");
     }
   };
@@ -93,8 +98,7 @@ export default function SummarizerPage() {
       setResult(normalizeResult(data));
       setState("done");
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { detail?: string } } };
-      setError(err.response?.data?.detail || "Summarization failed");
+      setError(getErrorMessage(e, "Summarization failed"));
       setState("error");
     }
   };
@@ -118,7 +122,7 @@ export default function SummarizerPage() {
         </h1>
         <p className="text-white/40 ml-13">Upload a TXT file or paste text — get instant smart summaries</p>
         <div className="mt-4 rounded-3xl border border-violet-500/20 bg-violet-500/5 p-4 text-sm text-violet-100 shadow-lg shadow-violet-500/10">
-          <strong className="font-semibold text-white">File & text limits:</strong> upload only <span className="text-white">.txt</span> files under <span className="text-white">1MB</span>, or paste up to <span className="text-white">1,000 characters</span>.
+          <strong className="font-semibold text-white">File & text limits:</strong> upload only small <span className="text-white">.txt</span> files under <span className="text-white">20KB</span>, or paste up to <span className="text-white">1,000 characters</span>. Keeping inputs small ensures a fast, reliable summary.
         </div>
       </motion.div>
 
@@ -163,9 +167,9 @@ export default function SummarizerPage() {
               <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 2, repeat: Infinity }}>
                 <Upload className="w-12 h-12 text-violet-400/60 mx-auto mb-3 group-hover:text-violet-400 transition-colors" />
               </motion.div>
-              <h3 className="text-white/70 font-semibold mb-1 group-hover:text-white">Drop your TXT file here</h3>
+              <h3 className="text-white/70 font-semibold mb-1 group-hover:text-white">Drop a small TXT file here</h3>
               <p className="text-white/30 text-sm">Text files only (.txt)</p>
-              <p className="text-white/70 text-xs mt-2">File limit: 1MB</p>
+              <p className="text-white/70 text-xs mt-2">File limit: 20KB</p>
               <div className="mt-3 px-4 py-1.5 rounded-xl gradient-bg text-white text-xs font-medium inline-block">Browse Files</div>
             </div>
           </motion.div>

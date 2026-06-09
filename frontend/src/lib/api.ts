@@ -13,6 +13,23 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Normalize backend/axios errors into a human-readable string.
+// FastAPI returns 422 validation errors as { detail: [{ loc, msg, type }, ...] },
+// and other errors as { detail: "message" }. Rendering the raw array as a React
+// child crashes, so collapse everything down to a single string here.
+export function getErrorMessage(err: unknown, fallback = "Something went wrong. Please try again."): string {
+  const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const msg = detail
+      .map((d) => (typeof d === "string" ? d : (d as { msg?: string })?.msg))
+      .filter(Boolean)
+      .join(", ");
+    if (msg) return msg;
+  }
+  return fallback;
+}
+
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
